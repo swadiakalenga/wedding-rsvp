@@ -50,6 +50,7 @@ function TripleStar() {
 function CeremonyCard({
   icon,
   title,
+  venueName,
   time,
   place,
   refs,
@@ -57,6 +58,7 @@ function CeremonyCard({
 }: {
   icon: string;
   title: string;
+  venueName?: string;
   time: string;
   place: string;
   refs: string[];
@@ -83,6 +85,15 @@ function CeremonyCard({
       </h3>
 
       <GoldDivider />
+
+      {venueName && (
+        <p
+          style={{ fontFamily: "var(--font-playfair)" }}
+          className="text-[#1a1610] text-base sm:text-lg font-medium italic text-center leading-snug"
+        >
+          {venueName}
+        </p>
+      )}
 
       <p
         style={{ fontFamily: "var(--font-cormorant)" }}
@@ -256,6 +267,7 @@ export default function Home() {
           <CeremonyCard
             icon="⛪"
             title="Consécration du mariage"
+            venueName="Zoe Tabernacle Kinshasa"
             time="12h30 — 13h00"
             place="Avenue Bolobo 121, commune de Kinshasa"
             refs={[
@@ -267,6 +279,7 @@ export default function Home() {
           <CeremonyCard
             icon="🎊"
             title="Cérémonie dansante"
+            venueName="La Servante du Seigneur"
             time="19h00 — jusqu'à l'aube"
             place="Révolution 1, commune de la Gombe"
             refs={[
