@@ -243,18 +243,18 @@ export default function Home() {
           <GoldDivider wide />
 
           {/* CTA buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 mt-2 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-4 mt-2 w-full max-w-md">
             <a
               href="#rsvp"
               style={{ fontFamily: "var(--font-cormorant)" }}
-              className="inline-flex items-center justify-center px-10 py-4 bg-[#1a1610] text-[#e8d5a3] border border-[#1a1610] text-sm sm:text-base tracking-[0.25em] uppercase font-medium transition-all duration-400 hover:bg-[#c9a84c] hover:border-[#c9a84c] hover:text-[#1a1610] hover:scale-[1.02] active:scale-[0.98]"
+              className="flex-1 flex items-center justify-center px-8 py-4 bg-[#1a1610] text-[#e8d5a3] border border-[#1a1610] text-sm sm:text-base tracking-[0.25em] uppercase font-medium transition-all duration-400 hover:bg-[#c9a84c] hover:border-[#c9a84c] hover:text-[#1a1610] hover:scale-[1.02] active:scale-[0.98]"
             >
               Confirmer ma présence
             </a>
             <a
               href="#lieux"
               style={{ fontFamily: "var(--font-cormorant)" }}
-              className="inline-flex items-center justify-center px-10 py-4 bg-transparent text-[#1a1610] border border-[#c9a84c]/60 text-sm sm:text-base tracking-[0.25em] uppercase font-medium transition-all duration-400 hover:border-[#c9a84c] hover:bg-[#c9a84c]/10 hover:scale-[1.02] active:scale-[0.98]"
+              className="flex-1 flex items-center justify-center px-8 py-4 bg-transparent text-[#1a1610] border border-[#c9a84c]/60 text-sm sm:text-base tracking-[0.25em] uppercase font-medium transition-all duration-400 hover:border-[#c9a84c] hover:bg-[#c9a84c]/10 hover:scale-[1.02] active:scale-[0.98]"
             >
               Voir les lieux
             </a>
@@ -379,19 +379,29 @@ export default function Home() {
       {/* ══════════════════════════════════════════════════════════════
           FOOTER
       ══════════════════════════════════════════════════════════════ */}
-      <footer className="flex flex-col items-center gap-3 py-10 px-6 text-center border-t border-[#c9a84c]/20">
+      <footer className="flex flex-col items-center gap-4 py-12 px-6 text-center border-t border-[#c9a84c]/20">
+        <div className="flex items-center gap-3">
+          <div className="h-px w-10 bg-[#c9a84c]/30" />
+          <span className="text-[#c9a84c]/50 text-[10px] select-none">✦</span>
+          <div className="h-px w-10 bg-[#c9a84c]/30" />
+        </div>
         <p
           style={{ fontFamily: "var(--font-playfair)" }}
-          className="text-[#1a1610] text-lg italic"
+          className="text-[#1a1610] text-lg sm:text-xl italic leading-relaxed max-w-sm"
         >
-          Joël &amp; Patience
+          « Ce que Dieu a uni, que l&apos;homme ne le sépare pas »
         </p>
         <p
           style={{ fontFamily: "var(--font-cormorant)" }}
-          className="text-[#9a8a6a] text-sm tracking-[0.3em] uppercase"
+          className="text-[#9a8a6a] text-sm tracking-[0.25em] uppercase"
         >
-          Famille MBIYE · Famille WA DIAKALENGA
+          Matthieu 19:6
         </p>
+        <div className="flex items-center gap-3">
+          <div className="h-px w-10 bg-[#c9a84c]/30" />
+          <span className="text-[#c9a84c]/50 text-[10px] select-none">✦</span>
+          <div className="h-px w-10 bg-[#c9a84c]/30" />
+        </div>
       </footer>
     </div>
   );

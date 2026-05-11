@@ -66,9 +66,9 @@ export default function RsvpForm() {
       return;
     }
 
-    // ── Companion names validation ────────────────────────────────────────────
-    if (form.attending && form.guest_count > 1 && !form.companion_names.trim()) {
-      setErrorMsg("Veuillez indiquer les noms des personnes qui vous accompagnent.");
+    // ── Companion name validation ─────────────────────────────────────────────
+    if (form.attending && form.guest_count === 2 && !form.companion_names.trim()) {
+      setErrorMsg("Veuillez indiquer le nom de votre conjoint(e).");
       setStatus("error");
       return;
     }
@@ -80,7 +80,7 @@ export default function RsvpForm() {
       attending: form.attending,
       guest_count: form.attending ? form.guest_count : 0,
       companion_names:
-        form.attending && form.guest_count > 1
+        form.attending && form.guest_count === 2
           ? form.companion_names.trim() || null
           : null,
       message: form.message.trim() || null,
@@ -243,56 +243,61 @@ export default function RsvpForm() {
         </div>
       </div>
 
-      {/* Nombre de personnes — only shown when attending */}
+      {/* Vous venez — only shown when attending */}
       {form.attending && (
         <div>
-          <label className={labelClass} htmlFor="guest_count">
-            Nombre de personnes <span className="text-[#c9a84c]">*</span>
-          </label>
-          <select
-            id="guest_count"
-            value={form.guest_count}
-            onChange={(e) => {
-              const count = Number(e.target.value);
-              set("guest_count", count);
-              if (count <= 1) set("companion_names", "");
-            }}
-            className={inputClass}
-          >
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
-              <option key={n} value={n}>
-                {n} {n === 1 ? "personne" : "personnes"}
-              </option>
+          <p className={labelClass}>
+            Vous venez <span className="text-[#c9a84c]">*</span>
+          </p>
+          <div className="flex gap-4">
+            {(
+              [
+                { value: 1, label: "Moi seul(e)" },
+                { value: 2, label: "Moi + mon conjoint / ma conjointe" },
+              ] as const
+            ).map(({ value, label }) => (
+              <label
+                key={value}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-3 border cursor-pointer transition-all duration-200 text-sm text-center leading-snug ${
+                  form.guest_count === value
+                    ? "border-[#c9a84c] bg-[#c9a84c]/10 text-[#1a1610]"
+                    : "border-[#c9a84c]/30 bg-white/50 text-[#6b5a3a] hover:border-[#c9a84c]/60"
+                }`}
+                style={{ fontFamily: "var(--font-cormorant)" }}
+              >
+                <input
+                  type="radio"
+                  name="guest_count"
+                  className="sr-only"
+                  checked={form.guest_count === value}
+                  onChange={() => {
+                    set("guest_count", value);
+                    if (value === 1) set("companion_names", "");
+                  }}
+                />
+                {label}
+              </label>
             ))}
-          </select>
+          </div>
         </div>
       )}
 
-      {/* Companion names — appears when attending with more than 1 person */}
-      {form.attending && form.guest_count > 1 && (
+      {/* Spouse name — appears when attending with partner */}
+      {form.attending && form.guest_count === 2 && (
         <div className="animate-fade-up">
           <label className={labelClass} htmlFor="companion_names">
-            Noms des personnes qui vous accompagnent{" "}
+            Nom du conjoint / de la conjointe{" "}
             <span className="text-[#c9a84c]">*</span>
           </label>
-          <textarea
+          <input
             id="companion_names"
+            type="text"
             required
-            rows={Math.max(2, form.guest_count - 1)}
-            placeholder={Array.from(
-              { length: form.guest_count - 1 },
-              (_, i) => `Accompagnant ${i + 1}`
-            ).join("\n")}
+            placeholder="Nom et prénom"
             value={form.companion_names}
             onChange={(e) => set("companion_names", e.target.value)}
-            className={`${inputClass} resize-none`}
+            className={inputClass}
           />
-          <p
-            className="mt-2 text-[#9a8a6a] text-xs italic"
-            style={{ fontFamily: "var(--font-cormorant)" }}
-          >
-            Veuillez écrire chaque nom sur une ligne.
-          </p>
         </div>
       )}
 
