@@ -242,15 +242,6 @@ export default function Home() {
 
           <GoldDivider wide />
 
-          {/* Invitation text */}
-          <p
-            style={{ fontFamily: "var(--font-cormorant)" }}
-            className="text-[#4a3c26] text-lg sm:text-xl md:text-2xl font-light italic leading-relaxed max-w-xl"
-          >
-            Les familles MBIYE et WA DIAKALENGA ont la joie de vous inviter à
-            la célébration du mariage de leurs enfants.
-          </p>
-
           {/* CTA buttons */}
           <div className="flex flex-col sm:flex-row gap-4 mt-2 w-full sm:w-auto">
             <a
