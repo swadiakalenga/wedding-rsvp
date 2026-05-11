@@ -50,6 +50,7 @@ function TripleStar() {
 function CeremonyCard({
   icon,
   title,
+  venueLabel,
   venueName,
   time,
   place,
@@ -58,6 +59,7 @@ function CeremonyCard({
 }: {
   icon: string;
   title: string;
+  venueLabel?: string;
   venueName?: string;
   time: string;
   place: string;
@@ -86,13 +88,25 @@ function CeremonyCard({
 
       <GoldDivider />
 
-      {venueName && (
-        <p
-          style={{ fontFamily: "var(--font-playfair)" }}
-          className="text-[#1a1610] text-base sm:text-lg font-medium italic text-center leading-snug"
-        >
-          {venueName}
-        </p>
+      {(venueLabel || venueName) && (
+        <div className="flex flex-col items-center gap-1">
+          {venueLabel && (
+            <p
+              style={{ fontFamily: "var(--font-cormorant)" }}
+              className="text-[#9a8a6a] text-[10px] tracking-[0.35em] uppercase"
+            >
+              {venueLabel}
+            </p>
+          )}
+          {venueName && (
+            <p
+              style={{ fontFamily: "var(--font-playfair)" }}
+              className="text-[#1a1610] text-base sm:text-lg font-medium italic text-center leading-snug"
+            >
+              {venueName}
+            </p>
+          )}
+        </div>
       )}
 
       <p
@@ -210,6 +224,22 @@ export default function Home() {
             <span>Patience MBUYI WA DIAKALENGA</span>
           </div>
 
+          {/* Wedding date */}
+          <div className="flex flex-col items-center gap-1.5">
+            <p
+              style={{ fontFamily: "var(--font-cormorant)" }}
+              className="text-[#9a8a6a] text-[10px] tracking-[0.45em] uppercase"
+            >
+              Lundi
+            </p>
+            <p
+              style={{ fontFamily: "var(--font-playfair)" }}
+              className="text-[#c9a84c] text-2xl sm:text-3xl font-light italic"
+            >
+              29 Juin 2026
+            </p>
+          </div>
+
           <GoldDivider wide />
 
           {/* Invitation text */}
@@ -279,6 +309,7 @@ export default function Home() {
           <CeremonyCard
             icon="🎊"
             title="Cérémonie dansante"
+            venueLabel="Salle de fête"
             venueName="La Servante du Seigneur"
             time="19h00 — jusqu'à l'aube"
             place="Révolution 1, commune de la Gombe"
