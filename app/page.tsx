@@ -1,5 +1,4 @@
 import { Playfair_Display, Cormorant_Garamond } from "next/font/google";
-import RsvpForm from "@/app/components/RsvpForm";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -242,19 +241,12 @@ export default function Home() {
 
           <GoldDivider wide />
 
-          {/* CTA buttons */}
+          {/* CTA button */}
           <div className="flex flex-col sm:flex-row gap-4 mt-2 w-full max-w-md">
-            <a
-              href="#rsvp"
-              style={{ fontFamily: "var(--font-cormorant)" }}
-              className="flex-1 flex items-center justify-center px-8 py-4 bg-[#1a1610] text-[#e8d5a3] border border-[#1a1610] text-sm sm:text-base tracking-[0.25em] uppercase font-medium transition-all duration-400 hover:bg-[#c9a84c] hover:border-[#c9a84c] hover:text-[#1a1610] hover:scale-[1.02] active:scale-[0.98]"
-            >
-              Confirmer ma présence
-            </a>
             <a
               href="#lieux"
               style={{ fontFamily: "var(--font-cormorant)" }}
-              className="flex-1 flex items-center justify-center px-8 py-4 bg-transparent text-[#1a1610] border border-[#c9a84c]/60 text-sm sm:text-base tracking-[0.25em] uppercase font-medium transition-all duration-400 hover:border-[#c9a84c] hover:bg-[#c9a84c]/10 hover:scale-[1.02] active:scale-[0.98]"
+              className="flex-1 flex items-center justify-center px-8 py-4 bg-[#1a1610] text-[#e8d5a3] border border-[#1a1610] text-sm sm:text-base tracking-[0.25em] uppercase font-medium transition-all duration-400 hover:bg-[#c9a84c] hover:border-[#c9a84c] hover:text-[#1a1610] hover:scale-[1.02] active:scale-[0.98]"
             >
               Voir les lieux
             </a>
@@ -331,7 +323,7 @@ export default function Home() {
       </section>
 
       {/* ══════════════════════════════════════════════════════════════
-          RSVP SECTION
+          RSVP SECTION — invitation personnalisée uniquement
       ══════════════════════════════════════════════════════════════ */}
       <section
         id="rsvp"
@@ -341,7 +333,6 @@ export default function Home() {
             "linear-gradient(180deg, #faf7f0 0%, #f5ede0 50%, #faf7f0 100%)",
         }}
       >
-        {/* Header */}
         <div className="flex flex-col items-center gap-5 text-center animate-fade-up">
           <TripleStar />
           <h2
@@ -351,25 +342,36 @@ export default function Home() {
             Votre présence
           </h2>
           <GoldDivider wide />
-          <p
-            style={{ fontFamily: "var(--font-cormorant)" }}
-            className="text-[#4a3c26] text-lg sm:text-xl italic font-light leading-relaxed max-w-md"
-          >
-            Merci de confirmer votre présence afin que nous puissions vous
-            accueillir dans les meilleures conditions.
-          </p>
         </div>
 
-        {/* Form card */}
         <div className="relative w-full max-w-lg">
-          {/* Card corner accents */}
           <span className="absolute -top-2 -left-2 w-6 h-6 border-l border-t border-[#c9a84c]/50" />
           <span className="absolute -top-2 -right-2 w-6 h-6 border-r border-t border-[#c9a84c]/50" />
           <span className="absolute -bottom-2 -left-2 w-6 h-6 border-l border-b border-[#c9a84c]/50" />
           <span className="absolute -bottom-2 -right-2 w-6 h-6 border-r border-b border-[#c9a84c]/50" />
 
-          <div className="bg-white/50 border border-[#c9a84c]/20 px-6 py-8 sm:px-10 sm:py-10">
-            <RsvpForm />
+          <div className="bg-white/50 border border-[#c9a84c]/20 px-6 py-10 sm:px-10 sm:py-12 flex flex-col items-center gap-6 text-center">
+            <span className="text-[#c9a84c] text-3xl select-none">✦</span>
+            <p
+              style={{ fontFamily: "var(--font-playfair)" }}
+              className="text-[#1a1610] text-xl sm:text-2xl italic leading-relaxed"
+            >
+              Les confirmations se font via votre lien d&apos;invitation personnalisé.
+            </p>
+            <p
+              style={{ fontFamily: "var(--font-cormorant)" }}
+              className="text-[#6b5a3a] text-base sm:text-lg italic font-light leading-relaxed max-w-sm"
+            >
+              Vous avez reçu un lien unique par message. Ouvrez-le pour confirmer
+              votre présence en quelques secondes.
+            </p>
+            <GoldDivider wide />
+            <p
+              style={{ fontFamily: "var(--font-cormorant)" }}
+              className="text-[#9a8a6a] text-sm italic"
+            >
+              Vous n&apos;avez pas reçu votre lien ? Contactez les familles directement.
+            </p>
           </div>
         </div>
 
