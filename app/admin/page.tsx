@@ -9,7 +9,7 @@ import {
 } from "react";
 import { Playfair_Display, Cormorant_Garamond } from "next/font/google";
 import { supabase } from "@/lib/supabase";
-import type { RsvpRow } from "@/lib/supabase";
+import type { GuestRow } from "@/lib/supabase";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -29,8 +29,7 @@ const cormorant = Cormorant_Garamond({
 
 const ADMIN_PW = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? "";
 
-// ─── Auth store via useSyncExternalStore ───────────────────────────────────────
-// Avoids calling setState inside useEffect (Next.js 16 lint rule).
+// ─── Auth store ────────────────────────────────────────────────────────────
 
 const AUTH_KEY = "admin_auth";
 
@@ -42,22 +41,19 @@ const getAuthSnapshot = () => localStorage.getItem(AUTH_KEY) === "1";
 const getAuthServerSnapshot = () => false;
 
 function setAuth(value: boolean) {
-  if (value) {
-    localStorage.setItem(AUTH_KEY, "1");
-  } else {
-    localStorage.removeItem(AUTH_KEY);
-  }
+  if (value) localStorage.setItem(AUTH_KEY, "1");
+  else localStorage.removeItem(AUTH_KEY);
   window.dispatchEvent(new Event("admin-auth-change"));
 }
 
-// ─── Shared styles ─────────────────────────────────────────────────────────────
+// ─── Shared styles ─────────────────────────────────────────────────────────
 
 const fieldCls =
   "bg-white/70 border border-[#c9a84c]/40 px-3 py-2 text-[#1a1610] " +
   "placeholder:text-[#9a8a6a]/50 focus:outline-none focus:border-[#c9a84c] " +
   "focus:bg-white transition-colors text-sm w-full";
 
-// ─── Ornament ──────────────────────────────────────────────────────────────────
+// ─── Ornament ──────────────────────────────────────────────────────────────
 
 function Divider() {
   return (
@@ -69,7 +65,7 @@ function Divider() {
   );
 }
 
-// ─── Stat card ─────────────────────────────────────────────────────────────────
+// ─── Stat card ─────────────────────────────────────────────────────────────
 
 function StatCard({
   label,
@@ -109,7 +105,7 @@ function StatCard({
   );
 }
 
-// ─── Password gate ─────────────────────────────────────────────────────────────
+// ─── Login gate ────────────────────────────────────────────────────────────
 
 function LoginGate({ onLogin }: { onLogin: () => void }) {
   const [pw, setPw] = useState("");
@@ -117,16 +113,9 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!ADMIN_PW) {
-      setError("unconfigured");
-      return;
-    }
-    if (pw === ADMIN_PW) {
-      onLogin();
-    } else {
-      setError("wrong");
-      setPw("");
-    }
+    if (!ADMIN_PW) { setError("unconfigured"); return; }
+    if (pw === ADMIN_PW) { onLogin(); }
+    else { setError("wrong"); setPw(""); }
   }
 
   return (
@@ -135,7 +124,6 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
         onSubmit={submit}
         className="relative w-full max-w-sm flex flex-col gap-7 animate-fade-up"
       >
-        {/* Corner accents */}
         <span className="absolute -top-8 -left-8 w-8 h-8 border-l border-t border-[#c9a84c]/40 hidden sm:block" />
         <span className="absolute -top-8 -right-8 w-8 h-8 border-r border-t border-[#c9a84c]/40 hidden sm:block" />
         <span className="absolute -bottom-8 -left-8 w-8 h-8 border-l border-b border-[#c9a84c]/40 hidden sm:block" />
@@ -169,15 +157,11 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
             type="password"
             placeholder="Mot de passe"
             value={pw}
-            onChange={(e) => {
-              setPw(e.target.value);
-              setError(null);
-            }}
+            onChange={(e) => { setPw(e.target.value); setError(null); }}
             className={`${fieldCls} py-3 text-center tracking-[0.3em]`}
             autoFocus
             autoComplete="current-password"
           />
-
           {error && (
             <p
               style={{ fontFamily: "var(--font-cormorant)" }}
@@ -188,7 +172,6 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
                 : "Mot de passe incorrect. Veuillez réessayer."}
             </p>
           )}
-
           <button
             type="submit"
             style={{ fontFamily: "var(--font-cormorant)" }}
@@ -202,50 +185,10 @@ function LoginGate({ onLogin }: { onLogin: () => void }) {
   );
 }
 
-// ─── Save button ───────────────────────────────────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────────────────────
 
-type SaveStatus = "idle" | "saving" | "saved" | "error";
-
-function SaveBtn({
-  status,
-  onClick,
-}: {
-  status: SaveStatus;
-  onClick: () => void;
-}) {
-  const label =
-    status === "saving"
-      ? "…"
-      : status === "saved"
-        ? "✓"
-        : status === "error"
-          ? "✗"
-          : "Sauv.";
-
-  const cls =
-    status === "saved"
-      ? "border-emerald-300 text-emerald-700 bg-emerald-50"
-      : status === "error"
-        ? "border-red-300 text-red-600 bg-red-50"
-        : status === "saving"
-          ? "border-[#c9a84c]/30 text-[#9a8a6a] opacity-60 cursor-not-allowed"
-          : "border-[#c9a84c]/40 text-[#4a3c26] hover:border-[#c9a84c] hover:bg-[#c9a84c]/10";
-
-  return (
-    <button
-      onClick={onClick}
-      disabled={status === "saving"}
-      style={{ fontFamily: "var(--font-cormorant)" }}
-      className={`text-xs px-2 py-1 border transition-all duration-200 whitespace-nowrap ${cls}`}
-    >
-      {label}
-    </button>
-  );
-}
-
-// ─── Helpers ───────────────────────────────────────────────────────────────────
-
-function fmtDate(iso: string) {
+function fmtDate(iso: string | null) {
+  if (!iso) return "—";
   return new Date(iso).toLocaleString("fr-FR", {
     day: "2-digit",
     month: "2-digit",
@@ -255,75 +198,36 @@ function fmtDate(iso: string) {
   });
 }
 
-// Display-only formatting — raw normalized value is never touched.
-function formatPhone(raw: string): string {
-  const stripped = raw.replace(/[\s\-().]/g, "");
+type FilterKey =
+  | "all"
+  | "rsvped"
+  | "not_rsvped"
+  | "attending"
+  | "not_attending"
+  | "plus_one";
 
-  if (stripped.startsWith("+")) {
-    const digits = stripped.slice(1);
-    // Congo +243 + 9 digits
-    if (digits.startsWith("243") && digits.length === 12) {
-      return `+243 ${digits.slice(3, 6)} ${digits.slice(6, 9)} ${digits.slice(9)}`;
-    }
-    // North America +1 + 10 digits
-    if (digits.startsWith("1") && digits.length === 11) {
-      return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
-    }
-    // Generic international: group remaining digits in threes
-    const groups: string[] = [];
-    let rest = digits;
-    while (rest.length > 3) {
-      groups.push(rest.slice(0, 3));
-      rest = rest.slice(3);
-    }
-    groups.push(rest);
-    return "+" + groups.join(" ");
-  }
+// ─── CSV builder ───────────────────────────────────────────────────────────
 
-  // 10-digit starting with 0 (African local format): 081 234 5678
-  if (/^0\d{9}$/.test(stripped)) {
-    return `${stripped.slice(0, 3)} ${stripped.slice(3, 6)} ${stripped.slice(6)}`;
-  }
-
-  // 10-digit, no leading 0 — treat as NANP: (NXX) NXX-XXXX
-  if (/^\d{10}$/.test(stripped)) {
-    return `(${stripped.slice(0, 3)}) ${stripped.slice(3, 6)}-${stripped.slice(6)}`;
-  }
-
-  // Unknown: group all digits in threes with spaces
-  const onlyDigits = stripped.replace(/\D/g, "");
-  if (!onlyDigits) return raw;
-  const groups: string[] = [];
-  let d = onlyDigits;
-  while (d.length > 3) {
-    groups.push(d.slice(0, 3));
-    d = d.slice(3);
-  }
-  groups.push(d);
-  return groups.join(" ");
-}
-
-function buildCSV(rows: RsvpRow[]): string {
+function buildCSV(rows: GuestRow[], baseUrl: string): string {
   const headers = [
     "Nom complet",
-    "Téléphone",
-    "Présence",
-    "Nb personnes",
-    "Accompagnants",
-    "Table",
-    "Message",
+    "Places autorisées",
+    "Conjoint autorisé",
+    "Nom du conjoint",
+    "Présent(e)",
+    "RSVP reçu",
     "Date de réponse",
+    "Lien d'invitation",
   ];
   const data = rows.map((r) => [
     r.full_name,
-    // ="..." forces Excel to treat the cell as text, preventing scientific notation.
-    `="${formatPhone(r.phone)}"`,
-    r.attending ? "Oui" : "Non",
-    String(r.guest_count),
-    r.companion_names ?? "",
-    r.table_number ?? "",
-    r.message ?? "",
-    fmtDate(r.created_at),
+    String(r.allowed_count),
+    r.allow_plus_one ? "Oui" : "Non",
+    r.plus_one_name ?? "",
+    r.attending === true ? "Oui" : r.attending === false ? "Non" : "—",
+    r.has_rsvped ? "Oui" : "Non",
+    fmtDate(r.rsvped_at),
+    `${baseUrl}/invite/${r.token}`,
   ]);
   return [headers, ...data]
     .map((row) =>
@@ -346,120 +250,123 @@ function triggerDownload(content: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-// ─── Dashboard ─────────────────────────────────────────────────────────────────
+// ─── Copy button ───────────────────────────────────────────────────────────
+
+function CopyBtn({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // fallback: select the text
+    }
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      title="Copier le lien"
+      style={{ fontFamily: "var(--font-cormorant)" }}
+      className={`text-xs px-2 py-1 border transition-all duration-200 whitespace-nowrap ${
+        copied
+          ? "border-emerald-300 text-emerald-700 bg-emerald-50"
+          : "border-[#c9a84c]/40 text-[#4a3c26] hover:border-[#c9a84c] hover:bg-[#c9a84c]/10"
+      }`}
+    >
+      {copied ? "✓ Copié" : "Copier"}
+    </button>
+  );
+}
+
+// ─── Dashboard ─────────────────────────────────────────────────────────────
 
 function Dashboard({ onLogout }: { onLogout: () => void }) {
-  const [rsvps, setRsvps] = useState<RsvpRow[]>([]);
+  const [guests, setGuests] = useState<GuestRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState("");
-  const [filterAttending, setFilterAttending] = useState<"all" | "yes" | "no">(
-    "all"
-  );
-  const [tableInputs, setTableInputs] = useState<Record<string, string>>({});
-  const [saveStatus, setSaveStatus] = useState<Record<string, SaveStatus>>({});
+  const [filter, setFilter] = useState<FilterKey>("all");
 
-  // fetchRsvps is a pure async function — no setState inside.
-  // The effect handles all state updates from its resolved value.
-  const fetchRsvps = useCallback(
+  const baseUrl =
+    typeof window !== "undefined" ? window.location.origin : "";
+
+  const fetchGuests = useCallback(
     () =>
       supabase
-        .from("rsvps")
+        .from("guests")
         .select("*")
-        .order("created_at", { ascending: false }),
+        .order("full_name", { ascending: true }),
     []
   );
 
   useEffect(() => {
     let active = true;
-    fetchRsvps().then(({ data, error }) => {
+    fetchGuests().then(({ data, error }) => {
       if (!active) return;
       setLoading(false);
-      if (error) {
-        setFetchError(error.message);
-        return;
-      }
-      const rows = data ?? [];
+      if (error) { setFetchError(error.message); return; }
       setFetchError("");
-      setRsvps(rows);
-      const inputs: Record<string, string> = {};
-      rows.forEach((r) => {
-        inputs[r.id] = r.table_number ?? "";
-      });
-      setTableInputs(inputs);
+      setGuests(data ?? []);
     });
-    return () => {
-      active = false;
-    };
-  }, [fetchRsvps, refreshKey]);
+    return () => { active = false; };
+  }, [fetchGuests, refreshKey]);
 
   function refresh() {
     setLoading(true);
     setRefreshKey((k) => k + 1);
   }
 
-  // ── Derived ──────────────────────────────────────────────────────────────────
+  // ── Derived ────────────────────────────────────────────────────────────
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
-    return rsvps.filter((r) => {
+    return guests.filter((g) => {
       const matchSearch =
-        !q ||
-        r.full_name.toLowerCase().includes(q) ||
-        r.phone.toLowerCase().includes(q) ||
-        formatPhone(r.phone).toLowerCase().includes(q);
-      const matchAttending =
-        filterAttending === "all" ||
-        (filterAttending === "yes" ? r.attending : !r.attending);
-      return matchSearch && matchAttending;
+        !q || g.full_name.toLowerCase().includes(q);
+      const matchFilter =
+        filter === "all" ? true
+        : filter === "rsvped" ? g.has_rsvped
+        : filter === "not_rsvped" ? !g.has_rsvped
+        : filter === "attending" ? g.attending === true
+        : filter === "not_attending" ? g.attending === false
+        : filter === "plus_one" ? g.allow_plus_one
+        : true;
+      return matchSearch && matchFilter;
     });
-  }, [rsvps, search, filterAttending]);
+  }, [guests, search, filter]);
 
-  const stats = useMemo(
-    () => ({
-      total: rsvps.length,
-      confirmed: rsvps.filter((r) => r.attending).length,
-      declined: rsvps.filter((r) => !r.attending).length,
-      totalPeople: rsvps
-        .filter((r) => r.attending)
-        .reduce((s, r) => s + r.guest_count, 0),
-      tablesAssigned: new Set(
-        rsvps.map((r) => r.table_number).filter(Boolean)
-      ).size,
-    }),
-    [rsvps]
-  );
-
-  // ── Table save ───────────────────────────────────────────────────────────────
-
-  async function saveTable(id: string) {
-    setSaveStatus((p) => ({ ...p, [id]: "saving" }));
-    const value = tableInputs[id]?.trim() || null;
-    const { error } = await supabase
-      .from("rsvps")
-      .update({ table_number: value })
-      .eq("id", id);
-    if (error) {
-      setSaveStatus((p) => ({ ...p, [id]: "error" }));
-      setTimeout(() => setSaveStatus((p) => ({ ...p, [id]: "idle" })), 3000);
-      return;
-    }
-    setRsvps((p) =>
-      p.map((r) => (r.id === id ? { ...r, table_number: value } : r))
-    );
-    setSaveStatus((p) => ({ ...p, [id]: "saved" }));
-    setTimeout(() => setSaveStatus((p) => ({ ...p, [id]: "idle" })), 2000);
-  }
-
-  // ── CSV ──────────────────────────────────────────────────────────────────────
+  const stats = useMemo(() => {
+    const confirmed = guests.filter((g) => g.attending === true);
+    return {
+      total: guests.length,
+      rsvped: guests.filter((g) => g.has_rsvped).length,
+      confirmed: confirmed.length,
+      declined: guests.filter((g) => g.attending === false).length,
+      notResponded: guests.filter((g) => !g.has_rsvped).length,
+      expectedPeople: confirmed.reduce((s, g) => s + g.allowed_count, 0),
+    };
+  }, [guests]);
 
   function handleExport() {
     const date = new Date().toISOString().slice(0, 10);
-    triggerDownload(buildCSV(filtered), `rsvp-joel-patience-${date}.csv`);
+    triggerDownload(
+      buildCSV(filtered, baseUrl),
+      `invites-joel-patience-${date}.csv`
+    );
   }
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  const FILTERS: { k: FilterKey; label: string }[] = [
+    { k: "all", label: "Tous" },
+    { k: "rsvped", label: "RSVP reçu" },
+    { k: "not_rsvped", label: "Sans réponse" },
+    { k: "attending", label: "Présents" },
+    { k: "not_attending", label: "Absents" },
+    { k: "plus_one", label: "Couples" },
+  ];
 
   return (
     <div className="min-h-screen bg-[#faf7f0]">
@@ -513,19 +420,16 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         </div>
 
         {/* ── Stats ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 animate-fade-up">
-          <StatCard label="Réponses totales" value={stats.total} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 animate-fade-up">
+          <StatCard label="Invitations" value={stats.total} />
+          <StatCard label="RSVP reçus" value={stats.rsvped} />
           <StatCard label="Confirmés" value={stats.confirmed} />
           <StatCard label="Déclinés" value={stats.declined} />
+          <StatCard label="Sans réponse" value={stats.notResponded} />
           <StatCard
-            label="Invités attendus"
-            value={stats.totalPeople}
+            label="Personnes attendues"
+            value={stats.expectedPeople}
             sub="personnes"
-          />
-          <StatCard
-            label="Tables utilisées"
-            value={stats.tablesAssigned}
-            sub="numéros uniques"
           />
         </div>
 
@@ -533,27 +437,21 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         <div className="flex flex-wrap gap-3 items-center animate-fade-up">
           <input
             type="text"
-            placeholder="Nom ou téléphone…"
+            placeholder="Rechercher un invité…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ fontFamily: "var(--font-cormorant)" }}
-            className={`${fieldCls} max-w-[220px]`}
+            className={`${fieldCls} max-w-[240px]`}
           />
 
-          <div className="flex gap-1">
-            {(
-              [
-                { k: "all", label: "Tous" },
-                { k: "yes", label: "Présents" },
-                { k: "no", label: "Absents" },
-              ] as const
-            ).map(({ k, label }) => (
+          <div className="flex flex-wrap gap-1">
+            {FILTERS.map(({ k, label }) => (
               <button
                 key={k}
-                onClick={() => setFilterAttending(k)}
+                onClick={() => setFilter(k)}
                 style={{ fontFamily: "var(--font-cormorant)" }}
-                className={`px-3 py-1.5 text-xs tracking-[0.15em] uppercase border transition-all duration-200 ${
-                  filterAttending === k
+                className={`px-3 py-1.5 text-xs tracking-[0.12em] uppercase border transition-all duration-200 ${
+                  filter === k
                     ? "bg-[#1a1610] text-[#e8d5a3] border-[#1a1610]"
                     : "bg-white/60 text-[#6b5a3a] border-[#c9a84c]/30 hover:border-[#c9a84c]"
                 }`}
@@ -580,7 +478,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               style={{ fontFamily: "var(--font-cormorant)" }}
               className="text-[#9a8a6a] text-lg italic animate-pulse"
             >
-              Chargement des réponses…
+              Chargement des invités…
             </p>
           </div>
         )}
@@ -592,7 +490,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               style={{ fontFamily: "var(--font-cormorant)" }}
               className="text-red-700 italic text-sm flex-1"
             >
-              Erreur lors du chargement : {fetchError}
+              Erreur : {fetchError}
             </p>
             <button
               onClick={refresh}
@@ -605,20 +503,20 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
         )}
 
         {/* ── Empty state ── */}
-        {!loading && !fetchError && rsvps.length === 0 && (
+        {!loading && !fetchError && guests.length === 0 && (
           <div className="flex flex-col items-center gap-5 py-24">
             <span className="text-[#c9a84c]/30 text-5xl select-none">✦</span>
             <p
               style={{ fontFamily: "var(--font-cormorant)" }}
               className="text-[#9a8a6a] text-xl italic"
             >
-              Aucune réponse enregistrée pour le moment.
+              Aucun invité enregistré. Lancez le script d&apos;import.
             </p>
           </div>
         )}
 
         {/* ── No filter results ── */}
-        {!loading && !fetchError && rsvps.length > 0 && filtered.length === 0 && (
+        {!loading && !fetchError && guests.length > 0 && filtered.length === 0 && (
           <div className="flex flex-col items-center gap-4 py-16">
             <p
               style={{ fontFamily: "var(--font-cormorant)" }}
@@ -627,10 +525,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               Aucun résultat pour cette recherche.
             </p>
             <button
-              onClick={() => {
-                setSearch("");
-                setFilterAttending("all");
-              }}
+              onClick={() => { setSearch(""); setFilter("all"); }}
               style={{ fontFamily: "var(--font-cormorant)" }}
               className="text-[#c9a84c] text-xs tracking-[0.2em] uppercase underline underline-offset-2"
             >
@@ -646,25 +541,25 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               style={{ fontFamily: "var(--font-cormorant)" }}
               className="text-[#9a8a6a] text-xs italic"
             >
-              {filtered.length} résultat{filtered.length > 1 ? "s" : ""}
-              {filtered.length !== rsvps.length
-                ? ` sur ${rsvps.length} au total`
+              {filtered.length} invité{filtered.length > 1 ? "s" : ""}
+              {filtered.length !== guests.length
+                ? ` sur ${guests.length} au total`
                 : ""}
             </p>
 
             <div className="overflow-x-auto border border-[#c9a84c]/20">
-              <table className="w-full text-sm border-collapse min-w-[860px]">
+              <table className="w-full text-sm border-collapse min-w-[1100px]">
                 <thead>
                   <tr className="bg-[#1a1610]">
                     {[
                       "Nom complet",
-                      "Téléphone",
+                      "Places",
+                      "+1",
+                      "Conjoint(e)",
                       "Présence",
-                      "Pers.",
-                      "Accompagnants",
-                      "Table",
-                      "Message",
-                      "Date",
+                      "RSVP",
+                      "Date de réponse",
+                      "Lien d'invitation",
                     ].map((h) => (
                       <th
                         key={h}
@@ -677,11 +572,11 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((r, i) => {
-                    const st: SaveStatus = saveStatus[r.id] ?? "idle";
+                  {filtered.map((g, i) => {
+                    const inviteUrl = `${baseUrl}/invite/${g.token}`;
                     return (
                       <tr
-                        key={r.id}
+                        key={g.id}
                         className={`border-b border-[#c9a84c]/10 transition-colors hover:bg-[#c9a84c]/5 ${
                           i % 2 === 0 ? "bg-white/50" : "bg-[#faf7f0]"
                         }`}
@@ -690,95 +585,82 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                         <td
                           style={{ fontFamily: "var(--font-cormorant)" }}
                           className="py-3 px-3 text-[#1a1610] font-semibold whitespace-nowrap max-w-[180px] truncate"
-                          title={r.full_name}
+                          title={g.full_name}
                         >
-                          {r.full_name}
+                          {g.full_name}
                         </td>
 
-                        {/* Téléphone */}
-                        <td
-                          className="py-3 px-3 text-[#6b5a3a] font-mono text-xs whitespace-nowrap tracking-wide"
-                          title={r.phone}
-                        >
-                          {formatPhone(r.phone)}
-                        </td>
-
-                        {/* Présence */}
-                        <td className="py-3 px-3">
-                          <span
-                            style={{ fontFamily: "var(--font-cormorant)" }}
-                            className={`inline-block px-2 py-0.5 text-xs border whitespace-nowrap ${
-                              r.attending
-                                ? "border-[#c9a84c]/40 text-[#5a4200] bg-[#c9a84c]/10"
-                                : "border-red-200 text-red-600 bg-red-50"
-                            }`}
-                          >
-                            {r.attending ? "Oui ✓" : "Non"}
-                          </span>
-                        </td>
-
-                        {/* Nb personnes */}
+                        {/* Places */}
                         <td
                           style={{ fontFamily: "var(--font-cormorant)" }}
                           className="py-3 px-3 text-[#6b5a3a] text-center"
                         >
-                          {r.guest_count}
+                          {g.allowed_count}
                         </td>
 
-                        {/* Accompagnants */}
+                        {/* +1 */}
+                        <td className="py-3 px-3 text-center">
+                          <span
+                            style={{ fontFamily: "var(--font-cormorant)" }}
+                            className={`text-xs ${
+                              g.allow_plus_one
+                                ? "text-[#c9a84c] font-semibold"
+                                : "text-[#c9a84c]/30"
+                            }`}
+                          >
+                            {g.allow_plus_one ? "Oui" : "—"}
+                          </span>
+                        </td>
+
+                        {/* Conjoint */}
                         <td
                           style={{ fontFamily: "var(--font-cormorant)" }}
-                          className="py-3 px-3 max-w-[160px]"
+                          className="py-3 px-3 max-w-[140px]"
                         >
-                          {r.companion_names ? (
-                            <span className="text-[#6b5a3a] text-xs whitespace-pre-line leading-snug block">
-                              {r.companion_names}
+                          {g.plus_one_name ? (
+                            <span className="text-[#6b5a3a] text-xs">
+                              {g.plus_one_name}
                             </span>
                           ) : (
                             <span className="text-[#c9a84c]/30 text-xs">—</span>
                           )}
                         </td>
 
-                        {/* Table */}
+                        {/* Présence */}
                         <td className="py-3 px-3">
-                          <div className="flex items-center gap-1.5">
-                            <input
-                              type="text"
-                              placeholder="N°"
-                              value={tableInputs[r.id] ?? ""}
-                              onChange={(e) =>
-                                setTableInputs((p) => ({
-                                  ...p,
-                                  [r.id]: e.target.value,
-                                }))
-                              }
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") saveTable(r.id);
-                              }}
-                              className="w-14 bg-white/70 border border-[#c9a84c]/40 px-2 py-1 text-xs focus:outline-none focus:border-[#c9a84c] text-[#1a1610] text-center"
-                            />
-                            <SaveBtn
-                              status={st}
-                              onClick={() => saveTable(r.id)}
-                            />
-                          </div>
-                        </td>
-
-                        {/* Message */}
-                        <td
-                          style={{ fontFamily: "var(--font-cormorant)" }}
-                          className="py-3 px-3 max-w-[180px]"
-                        >
-                          {r.message ? (
+                          {g.attending === null ? (
                             <span
-                              className="text-[#6b5a3a] text-xs italic line-clamp-2 block"
-                              title={r.message}
+                              style={{ fontFamily: "var(--font-cormorant)" }}
+                              className="text-[#c9a84c]/40 text-xs"
                             >
-                              {r.message}
+                              —
                             </span>
                           ) : (
-                            <span className="text-[#c9a84c]/30 text-xs">—</span>
+                            <span
+                              style={{ fontFamily: "var(--font-cormorant)" }}
+                              className={`inline-block px-2 py-0.5 text-xs border whitespace-nowrap ${
+                                g.attending
+                                  ? "border-[#c9a84c]/40 text-[#5a4200] bg-[#c9a84c]/10"
+                                  : "border-red-200 text-red-600 bg-red-50"
+                              }`}
+                            >
+                              {g.attending ? "Oui ✓" : "Non"}
+                            </span>
                           )}
+                        </td>
+
+                        {/* RSVP reçu */}
+                        <td className="py-3 px-3">
+                          <span
+                            style={{ fontFamily: "var(--font-cormorant)" }}
+                            className={`inline-block px-2 py-0.5 text-xs border whitespace-nowrap ${
+                              g.has_rsvped
+                                ? "border-emerald-200 text-emerald-700 bg-emerald-50"
+                                : "border-[#c9a84c]/20 text-[#9a8a6a] bg-transparent"
+                            }`}
+                          >
+                            {g.has_rsvped ? "Reçu" : "En attente"}
+                          </span>
                         </td>
 
                         {/* Date */}
@@ -786,7 +668,20 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           style={{ fontFamily: "var(--font-cormorant)" }}
                           className="py-3 px-3 text-[#9a8a6a] text-xs whitespace-nowrap"
                         >
-                          {fmtDate(r.created_at)}
+                          {fmtDate(g.rsvped_at)}
+                        </td>
+
+                        {/* Lien */}
+                        <td className="py-3 px-3">
+                          <div className="flex items-center gap-2 min-w-[200px]">
+                            <span
+                              className="text-[#6b5a3a] text-xs font-mono truncate max-w-[140px]"
+                              title={inviteUrl}
+                            >
+                              /invite/{g.token.slice(0, 10)}…
+                            </span>
+                            <CopyBtn text={inviteUrl} />
+                          </div>
                         </td>
                       </tr>
                     );
@@ -806,11 +701,9 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   );
 }
 
-// ─── Page root ─────────────────────────────────────────────────────────────────
+// ─── Page root ─────────────────────────────────────────────────────────────
 
 export default function AdminPage() {
-  // useSyncExternalStore reads localStorage correctly on client,
-  // returns false on server (no hydration mismatch, no useEffect setState).
   const authed = useSyncExternalStore(
     subscribeAuth,
     getAuthSnapshot,
