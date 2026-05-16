@@ -1161,7 +1161,6 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       "RSVP",
                       "Date de réponse",
                       "Lien d'invitation",
-                      "Actions",
                     ].map((h) => (
                       <th
                         key={h}
@@ -1171,6 +1170,12 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                         {h}
                       </th>
                     ))}
+                    <th
+                      style={{ fontFamily: "var(--font-cormorant)" }}
+                      className="text-left text-[10px] tracking-[0.25em] uppercase text-[#9a8a6a] py-3 px-4 font-normal whitespace-nowrap border-b border-[#c9a84c]/20 sticky right-0 bg-[#1a1610] z-10 border-l border-l-[#c9a84c]/20"
+                    >
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1286,29 +1291,31 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                           </div>
                         </td>
 
-                        {/* Actions */}
-                        <td className="py-3 px-3 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
+                        {/* Actions — sticky so always visible on horizontal scroll */}
+                        <td
+                          className={`py-3 px-4 whitespace-nowrap sticky right-0 z-10 border-l border-l-[#c9a84c]/15 ${
+                            i % 2 === 0 ? "bg-white" : "bg-[#faf7f0]"
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5">
                             <button
                               onClick={() => setModal({ kind: "edit", guest: g })}
                               style={{ fontFamily: "var(--font-cormorant)" }}
-                              className="text-xs text-[#6b5a3a] hover:text-[#c9a84c] transition-colors tracking-[0.05em]"
+                              className="text-xs px-2.5 py-1 border border-[#c9a84c]/40 text-[#4a3c26] hover:border-[#c9a84c] hover:bg-[#c9a84c]/10 transition-all tracking-[0.05em] whitespace-nowrap"
                             >
                               Modifier
                             </button>
-                            <span className="text-[#c9a84c]/20 text-xs">|</span>
                             <button
                               onClick={() => setModal({ kind: "regen", guest: g })}
                               style={{ fontFamily: "var(--font-cormorant)" }}
-                              className="text-xs text-[#6b5a3a] hover:text-[#c9a84c] transition-colors tracking-[0.05em]"
+                              className="text-xs px-2.5 py-1 border border-[#c9a84c]/40 text-[#4a3c26] hover:border-[#c9a84c] hover:bg-[#c9a84c]/10 transition-all tracking-[0.05em] whitespace-nowrap"
                             >
                               Régénérer
                             </button>
-                            <span className="text-[#c9a84c]/20 text-xs">|</span>
                             <button
                               onClick={() => setModal({ kind: "delete", guest: g })}
                               style={{ fontFamily: "var(--font-cormorant)" }}
-                              className="text-xs text-red-500 hover:text-red-700 transition-colors tracking-[0.05em]"
+                              className="text-xs px-2.5 py-1 bg-red-600 text-white hover:bg-red-700 active:bg-red-800 transition-all tracking-[0.05em] whitespace-nowrap font-semibold"
                             >
                               Supprimer
                             </button>
