@@ -60,7 +60,7 @@ type Database = {
       guests: {
         Row: GuestRow;
         Insert: Omit<GuestRow, "id" | "created_at">;
-        Update: GuestUpdate;
+        Update: Partial<Omit<GuestRow, "id" | "created_at">>;
         Relationships: [];
       };
     };

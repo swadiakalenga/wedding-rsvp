@@ -53,6 +53,19 @@ const fieldCls =
   "placeholder:text-[#9a8a6a]/50 focus:outline-none focus:border-[#c9a84c] " +
   "focus:bg-white transition-colors text-sm w-full";
 
+// ─── Admin API helper ──────────────────────────────────────────────────────
+
+async function adminFetch(url: string, options: RequestInit = {}) {
+  return fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-password": ADMIN_PW,
+      ...(options.headers as Record<string, string>),
+    },
+  });
+}
+
 // ─── Ornament ──────────────────────────────────────────────────────────────
 
 function Divider() {
@@ -261,7 +274,7 @@ function CopyBtn({ text }: { text: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // fallback: select the text
+      // ignore
     }
   }
 
@@ -281,6 +294,518 @@ function CopyBtn({ text }: { text: string }) {
   );
 }
 
+// ─── Modal shell ───────────────────────────────────────────────────────────
+
+function ModalShell({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="relative bg-[#faf7f0] border border-[#c9a84c]/30 w-full max-w-md flex flex-col gap-5 p-6 shadow-2xl animate-fade-up max-h-[90vh] overflow-y-auto">
+        <div className="flex items-start justify-between gap-4">
+          <h2
+            style={{ fontFamily: "var(--font-playfair)" }}
+            className="text-[#1a1610] text-xl font-light italic"
+          >
+            {title}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-[#9a8a6a] hover:text-[#1a1610] transition-colors text-2xl leading-none shrink-0 mt-0.5"
+            aria-label="Fermer"
+          >
+            ×
+          </button>
+        </div>
+        <Divider />
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// ─── Form helpers ──────────────────────────────────────────────────────────
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <label
+      style={{ fontFamily: "var(--font-cormorant)" }}
+      className="text-[#9a8a6a] text-xs tracking-[0.2em] uppercase block mb-1"
+    >
+      {children}
+    </label>
+  );
+}
+
+function FormError({ msg }: { msg: string }) {
+  return (
+    <p
+      style={{ fontFamily: "var(--font-cormorant)" }}
+      className="text-red-700 text-sm italic"
+    >
+      {msg}
+    </p>
+  );
+}
+
+function SubmitBtn({
+  loading,
+  label,
+  loadingLabel,
+  disabled,
+}: {
+  loading: boolean;
+  label: string;
+  loadingLabel: string;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="submit"
+      disabled={loading || disabled}
+      style={{ fontFamily: "var(--font-cormorant)" }}
+      className="flex-1 py-3 bg-[#1a1610] text-[#e8d5a3] text-sm tracking-[0.3em] uppercase transition-all hover:bg-[#c9a84c] hover:text-[#1a1610] disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {loading ? loadingLabel : label}
+    </button>
+  );
+}
+
+function CancelBtn({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{ fontFamily: "var(--font-cormorant)" }}
+      className="flex-1 py-3 border border-[#c9a84c]/40 text-[#6b5a3a] text-sm tracking-[0.2em] uppercase hover:bg-[#c9a84c]/10 transition-all"
+    >
+      Annuler
+    </button>
+  );
+}
+
+// ─── Link display (shared success state) ───────────────────────────────────
+
+function InviteLinkBox({ link }: { link: string }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <FieldLabel>Lien d&apos;invitation</FieldLabel>
+      <div className="flex items-center gap-2 bg-white/70 border border-[#c9a84c]/30 px-3 py-2">
+        <span className="text-[#4a3c26] text-xs font-mono truncate flex-1">
+          {link}
+        </span>
+        <CopyBtn text={link} />
+      </div>
+    </div>
+  );
+}
+
+// ─── Add guest modal ───────────────────────────────────────────────────────
+
+function AddModal({
+  onClose,
+  onCreated,
+  baseUrl,
+}: {
+  onClose: () => void;
+  onCreated: (guest: GuestRow) => void;
+  baseUrl: string;
+}) {
+  const [name, setName] = useState("");
+  const [count, setCount] = useState<1 | 2>(1);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [created, setCreated] = useState<GuestRow | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const res = await adminFetch("/api/admin/guests", {
+        method: "POST",
+        body: JSON.stringify({ full_name: name, allowed_count: count }),
+      });
+      const json = await res.json();
+      if (!res.ok) { setError(json.error ?? "Une erreur est survenue."); return; }
+      setCreated(json);
+      onCreated(json);
+    } catch {
+      setError("Erreur réseau. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (created) {
+    const link = `${baseUrl}/invite/${created.token}`;
+    return (
+      <ModalShell title="Invité ajouté ✓" onClose={onClose}>
+        <div className="flex flex-col gap-4">
+          <p
+            style={{ fontFamily: "var(--font-cormorant)" }}
+            className="text-[#6b5a3a] text-sm italic"
+          >
+            <strong>{created.full_name}</strong> a bien été ajouté(e) à la liste des invités.
+          </p>
+          <InviteLinkBox link={link} />
+          <button
+            onClick={onClose}
+            style={{ fontFamily: "var(--font-cormorant)" }}
+            className="w-full py-3 bg-[#1a1610] text-[#e8d5a3] text-sm tracking-[0.3em] uppercase transition-all hover:bg-[#c9a84c] hover:text-[#1a1610]"
+          >
+            Fermer
+          </button>
+        </div>
+      </ModalShell>
+    );
+  }
+
+  return (
+    <ModalShell title="Ajouter un invité" onClose={onClose}>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div>
+          <FieldLabel>Nom complet *</FieldLabel>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={fieldCls}
+            placeholder="Ex : Dupont Marie"
+            required
+            autoFocus
+          />
+        </div>
+
+        <div>
+          <FieldLabel>Places autorisées</FieldLabel>
+          <select
+            value={count}
+            onChange={(e) => setCount(Number(e.target.value) as 1 | 2)}
+            className={fieldCls}
+          >
+            <option value={1}>1 — Invité seul</option>
+            <option value={2}>2 — Couple / +1 autorisé</option>
+          </select>
+        </div>
+
+        {error && <FormError msg={error} />}
+
+        <div className="flex gap-3 pt-1">
+          <CancelBtn onClick={onClose} />
+          <SubmitBtn
+            loading={loading}
+            label="Ajouter"
+            loadingLabel="Création…"
+            disabled={!name.trim()}
+          />
+        </div>
+      </form>
+    </ModalShell>
+  );
+}
+
+// ─── Edit guest modal ──────────────────────────────────────────────────────
+
+function EditModal({
+  guest,
+  onClose,
+  onSaved,
+}: {
+  guest: GuestRow;
+  onClose: () => void;
+  onSaved: (updated: GuestRow) => void;
+}) {
+  const [name, setName] = useState(guest.full_name);
+  const [count, setCount] = useState<1 | 2>(guest.allowed_count as 1 | 2);
+  const [plusOneName, setPlusOneName] = useState(guest.plus_one_name ?? "");
+  const [attending, setAttending] = useState<"" | "true" | "false">(
+    guest.attending === null ? "" : guest.attending ? "true" : "false"
+  );
+  const [hasRsvped, setHasRsvped] = useState(guest.has_rsvped);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const body: Record<string, unknown> = {
+        full_name: name,
+        allowed_count: count,
+        plus_one_name: plusOneName.trim() || null,
+        attending: attending === "" ? null : attending === "true",
+        has_rsvped: hasRsvped,
+      };
+      const res = await adminFetch(`/api/admin/guests/${guest.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (!res.ok) { setError(json.error ?? "Une erreur est survenue."); return; }
+      onSaved(json);
+    } catch {
+      setError("Erreur réseau. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <ModalShell title="Modifier l'invité" onClose={onClose}>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div>
+          <FieldLabel>Nom complet *</FieldLabel>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={fieldCls}
+            required
+            autoFocus
+          />
+        </div>
+
+        <div>
+          <FieldLabel>Places autorisées</FieldLabel>
+          <select
+            value={count}
+            onChange={(e) => { setCount(Number(e.target.value) as 1 | 2); }}
+            className={fieldCls}
+          >
+            <option value={1}>1 — Invité seul</option>
+            <option value={2}>2 — Couple / +1 autorisé</option>
+          </select>
+        </div>
+
+        {count === 2 && (
+          <div>
+            <FieldLabel>Nom du / de la conjoint(e)</FieldLabel>
+            <input
+              type="text"
+              value={plusOneName}
+              onChange={(e) => setPlusOneName(e.target.value)}
+              className={fieldCls}
+              placeholder="Nom du conjoint (optionnel)"
+            />
+          </div>
+        )}
+
+        <div>
+          <FieldLabel>Présence</FieldLabel>
+          <select
+            value={attending}
+            onChange={(e) => setAttending(e.target.value as "" | "true" | "false")}
+            className={fieldCls}
+          >
+            <option value="">— Non répondu</option>
+            <option value="true">Présent(e)</option>
+            <option value="false">Absent(e)</option>
+          </select>
+        </div>
+
+        <div>
+          <FieldLabel>Statut RSVP</FieldLabel>
+          <select
+            value={hasRsvped ? "true" : "false"}
+            onChange={(e) => setHasRsvped(e.target.value === "true")}
+            className={fieldCls}
+          >
+            <option value="false">En attente</option>
+            <option value="true">RSVP reçu</option>
+          </select>
+        </div>
+
+        {error && <FormError msg={error} />}
+
+        <div className="flex gap-3 pt-1">
+          <CancelBtn onClick={onClose} />
+          <SubmitBtn
+            loading={loading}
+            label="Enregistrer"
+            loadingLabel="Enregistrement…"
+            disabled={!name.trim()}
+          />
+        </div>
+      </form>
+    </ModalShell>
+  );
+}
+
+// ─── Delete guest modal ────────────────────────────────────────────────────
+
+function DeleteModal({
+  guest,
+  onClose,
+  onDeleted,
+}: {
+  guest: GuestRow;
+  onClose: () => void;
+  onDeleted: (id: string) => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleDelete() {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await adminFetch(`/api/admin/guests/${guest.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        setError(json.error ?? "Une erreur est survenue.");
+        return;
+      }
+      onDeleted(guest.id);
+    } catch {
+      setError("Erreur réseau. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <ModalShell title="Supprimer l'invité" onClose={onClose}>
+      <div className="flex flex-col gap-5">
+        <p
+          style={{ fontFamily: "var(--font-cormorant)" }}
+          className="text-[#1a1610] text-base leading-relaxed"
+        >
+          Êtes-vous sûr de vouloir supprimer{" "}
+          <strong>{guest.full_name}</strong> ? Cette action est irréversible.
+        </p>
+
+        {error && <FormError msg={error} />}
+
+        <div className="flex gap-3">
+          <CancelBtn onClick={onClose} />
+          <button
+            onClick={handleDelete}
+            disabled={loading}
+            style={{ fontFamily: "var(--font-cormorant)" }}
+            className="flex-1 py-3 bg-red-700 text-white text-sm tracking-[0.3em] uppercase transition-all hover:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Suppression…" : "Supprimer"}
+          </button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+// ─── Regenerate link modal ─────────────────────────────────────────────────
+
+function RegenModal({
+  guest,
+  onClose,
+  onRegenerated,
+  baseUrl,
+}: {
+  guest: GuestRow;
+  onClose: () => void;
+  onRegenerated: (updated: GuestRow) => void;
+  baseUrl: string;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [newGuest, setNewGuest] = useState<GuestRow | null>(null);
+
+  async function handleRegen() {
+    setError("");
+    setLoading(true);
+    try {
+      const res = await adminFetch(
+        `/api/admin/guests/${guest.id}/regenerate`,
+        { method: "POST" }
+      );
+      const json = await res.json();
+      if (!res.ok) { setError(json.error ?? "Une erreur est survenue."); return; }
+      setNewGuest(json);
+      onRegenerated(json);
+    } catch {
+      setError("Erreur réseau. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (newGuest) {
+    const link = `${baseUrl}/invite/${newGuest.token}`;
+    return (
+      <ModalShell title="Lien régénéré ✓" onClose={onClose}>
+        <div className="flex flex-col gap-4">
+          <p
+            style={{ fontFamily: "var(--font-cormorant)" }}
+            className="text-[#6b5a3a] text-sm italic"
+          >
+            L&apos;ancien lien de <strong>{newGuest.full_name}</strong> ne fonctionne plus.
+            Voici le nouveau lien à partager :
+          </p>
+          <InviteLinkBox link={link} />
+          <button
+            onClick={onClose}
+            style={{ fontFamily: "var(--font-cormorant)" }}
+            className="w-full py-3 bg-[#1a1610] text-[#e8d5a3] text-sm tracking-[0.3em] uppercase transition-all hover:bg-[#c9a84c] hover:text-[#1a1610]"
+          >
+            Fermer
+          </button>
+        </div>
+      </ModalShell>
+    );
+  }
+
+  return (
+    <ModalShell title="Régénérer le lien" onClose={onClose}>
+      <div className="flex flex-col gap-5">
+        <p
+          style={{ fontFamily: "var(--font-cormorant)" }}
+          className="text-[#1a1610] text-base leading-relaxed"
+        >
+          Un nouveau lien sera généré pour <strong>{guest.full_name}</strong>.{" "}
+          <span className="text-red-700 font-semibold">
+            L&apos;ancien lien cessera immédiatement de fonctionner.
+          </span>
+        </p>
+
+        {error && <FormError msg={error} />}
+
+        <div className="flex gap-3">
+          <CancelBtn onClick={onClose} />
+          <button
+            onClick={handleRegen}
+            disabled={loading}
+            style={{ fontFamily: "var(--font-cormorant)" }}
+            className="flex-1 py-3 bg-[#1a1610] text-[#e8d5a3] text-sm tracking-[0.3em] uppercase transition-all hover:bg-[#c9a84c] hover:text-[#1a1610] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Génération…" : "Régénérer"}
+          </button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+
+// ─── Modal state ───────────────────────────────────────────────────────────
+
+type ModalState =
+  | { kind: "none" }
+  | { kind: "add" }
+  | { kind: "edit"; guest: GuestRow }
+  | { kind: "delete"; guest: GuestRow }
+  | { kind: "regen"; guest: GuestRow };
+
 // ─── Dashboard ─────────────────────────────────────────────────────────────
 
 function Dashboard({ onLogout }: { onLogout: () => void }) {
@@ -290,6 +815,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [modal, setModal] = useState<ModalState>({ kind: "none" });
 
   const baseUrl =
     typeof window !== "undefined" ? window.location.origin : "";
@@ -320,13 +846,41 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
     setRefreshKey((k) => k + 1);
   }
 
-  // ── Derived ────────────────────────────────────────────────────────────
+  function closeModal() { setModal({ kind: "none" }); }
+
+  // Optimistic guest list updates
+  function handleCreated(guest: GuestRow) {
+    setGuests((prev) =>
+      [...prev, guest].sort((a, b) => a.full_name.localeCompare(b.full_name))
+    );
+  }
+
+  function handleSaved(updated: GuestRow) {
+    setGuests((prev) =>
+      prev
+        .map((g) => (g.id === updated.id ? updated : g))
+        .sort((a, b) => a.full_name.localeCompare(b.full_name))
+    );
+    closeModal();
+  }
+
+  function handleDeleted(id: string) {
+    setGuests((prev) => prev.filter((g) => g.id !== id));
+    closeModal();
+  }
+
+  function handleRegenerated(updated: GuestRow) {
+    setGuests((prev) =>
+      prev.map((g) => (g.id === updated.id ? updated : g))
+    );
+  }
+
+  // ── Derived ──────────────────────────────────────────────────────────
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return guests.filter((g) => {
-      const matchSearch =
-        !q || g.full_name.toLowerCase().includes(q);
+      const matchSearch = !q || g.full_name.toLowerCase().includes(q);
       const matchFilter =
         filter === "all" ? true
         : filter === "rsvped" ? g.has_rsvped
@@ -370,6 +924,38 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
 
   return (
     <div className="min-h-screen bg-[#faf7f0]">
+
+      {/* ── Modals ── */}
+      {modal.kind === "add" && (
+        <AddModal
+          onClose={closeModal}
+          onCreated={handleCreated}
+          baseUrl={baseUrl}
+        />
+      )}
+      {modal.kind === "edit" && (
+        <EditModal
+          guest={modal.guest}
+          onClose={closeModal}
+          onSaved={handleSaved}
+        />
+      )}
+      {modal.kind === "delete" && (
+        <DeleteModal
+          guest={modal.guest}
+          onClose={closeModal}
+          onDeleted={handleDeleted}
+        />
+      )}
+      {modal.kind === "regen" && (
+        <RegenModal
+          guest={modal.guest}
+          onClose={closeModal}
+          onRegenerated={handleRegenerated}
+          baseUrl={baseUrl}
+        />
+      )}
+
       {/* ── Sticky header ── */}
       <header className="sticky top-0 z-30 bg-[#1a1610] border-b border-[#c9a84c]/20 px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
@@ -462,6 +1048,14 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
           </div>
 
           <button
+            onClick={() => setModal({ kind: "add" })}
+            style={{ fontFamily: "var(--font-cormorant)" }}
+            className="px-5 py-1.5 bg-[#1a1610] text-[#e8d5a3] text-xs tracking-[0.2em] uppercase hover:bg-[#c9a84c] hover:text-[#1a1610] transition-all duration-200"
+          >
+            + Ajouter un invité
+          </button>
+
+          <button
             onClick={handleExport}
             disabled={filtered.length === 0}
             style={{ fontFamily: "var(--font-cormorant)" }}
@@ -510,8 +1104,15 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
               style={{ fontFamily: "var(--font-cormorant)" }}
               className="text-[#9a8a6a] text-xl italic"
             >
-              Aucun invité enregistré. Lancez le script d&apos;import.
+              Aucun invité enregistré.
             </p>
+            <button
+              onClick={() => setModal({ kind: "add" })}
+              style={{ fontFamily: "var(--font-cormorant)" }}
+              className="px-6 py-2 bg-[#1a1610] text-[#e8d5a3] text-xs tracking-[0.3em] uppercase hover:bg-[#c9a84c] hover:text-[#1a1610] transition-all"
+            >
+              + Ajouter le premier invité
+            </button>
           </div>
         )}
 
@@ -548,7 +1149,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
             </p>
 
             <div className="overflow-x-auto border border-[#c9a84c]/20">
-              <table className="w-full text-sm border-collapse min-w-[1100px]">
+              <table className="w-full text-sm border-collapse min-w-[1350px]">
                 <thead>
                   <tr className="bg-[#1a1610]">
                     {[
@@ -560,6 +1161,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                       "RSVP",
                       "Date de réponse",
                       "Lien d'invitation",
+                      "Actions",
                     ].map((h) => (
                       <th
                         key={h}
@@ -681,6 +1283,35 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
                               /invite/{g.token.slice(0, 10)}…
                             </span>
                             <CopyBtn text={inviteUrl} />
+                          </div>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setModal({ kind: "edit", guest: g })}
+                              style={{ fontFamily: "var(--font-cormorant)" }}
+                              className="text-xs text-[#6b5a3a] hover:text-[#c9a84c] transition-colors tracking-[0.05em]"
+                            >
+                              Modifier
+                            </button>
+                            <span className="text-[#c9a84c]/20 text-xs">|</span>
+                            <button
+                              onClick={() => setModal({ kind: "regen", guest: g })}
+                              style={{ fontFamily: "var(--font-cormorant)" }}
+                              className="text-xs text-[#6b5a3a] hover:text-[#c9a84c] transition-colors tracking-[0.05em]"
+                            >
+                              Régénérer
+                            </button>
+                            <span className="text-[#c9a84c]/20 text-xs">|</span>
+                            <button
+                              onClick={() => setModal({ kind: "delete", guest: g })}
+                              style={{ fontFamily: "var(--font-cormorant)" }}
+                              className="text-xs text-red-500 hover:text-red-700 transition-colors tracking-[0.05em]"
+                            >
+                              Supprimer
+                            </button>
                           </div>
                         </td>
                       </tr>
