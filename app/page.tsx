@@ -1,4 +1,7 @@
 import { Playfair_Display, Cormorant_Garamond } from "next/font/google";
+import { GoldDivider } from "@/app/components/wedding/GoldDivider";
+import { TripleStar } from "@/app/components/wedding/TripleStar";
+import { WeddingProgram } from "@/app/components/wedding/WeddingProgram";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -15,127 +18,6 @@ const cormorant = Cormorant_Garamond({
   style: ["normal", "italic"],
   display: "swap",
 });
-
-// ─── Ornamental helpers ────────────────────────────────────────────────────────
-
-function GoldDivider({ wide = false }: { wide?: boolean }) {
-  return (
-    <div className="flex items-center gap-4 w-full justify-center">
-      <div
-        className={`h-px bg-[#c9a84c]/50 ${wide ? "w-20 sm:w-32" : "w-10 sm:w-16"}`}
-      />
-      <span className="text-[#c9a84c] text-xs select-none">✦</span>
-      <div
-        className={`h-px bg-[#c9a84c]/50 ${wide ? "w-20 sm:w-32" : "w-10 sm:w-16"}`}
-      />
-    </div>
-  );
-}
-
-function TripleStar() {
-  return (
-    <div className="flex items-center gap-4 justify-center">
-      <div className="h-px w-12 sm:w-24 bg-[#c9a84c]/40" />
-      <span className="text-[#c9a84c] text-[10px] tracking-[0.6em] select-none">
-        ✦ ✦ ✦
-      </span>
-      <div className="h-px w-12 sm:w-24 bg-[#c9a84c]/40" />
-    </div>
-  );
-}
-
-// ─── Ceremony card ─────────────────────────────────────────────────────────────
-
-function CeremonyCard({
-  icon,
-  title,
-  venueLabel,
-  venueName,
-  time,
-  place,
-  refs,
-  delay,
-}: {
-  icon: string;
-  title: string;
-  venueLabel?: string;
-  venueName?: string;
-  time: string;
-  place: string;
-  refs: string[];
-  delay: string;
-}) {
-  return (
-    <div
-      className="relative flex flex-col items-center gap-5 p-8 sm:p-10 border border-[#c9a84c]/30 bg-white/60 backdrop-blur-sm animate-fade-up"
-      style={{ animationDelay: delay }}
-    >
-      {/* corner accents */}
-      <span className="absolute top-3 left-3 w-5 h-5 border-l border-t border-[#c9a84c]/50" />
-      <span className="absolute top-3 right-3 w-5 h-5 border-r border-t border-[#c9a84c]/50" />
-      <span className="absolute bottom-3 left-3 w-5 h-5 border-l border-b border-[#c9a84c]/50" />
-      <span className="absolute bottom-3 right-3 w-5 h-5 border-r border-b border-[#c9a84c]/50" />
-
-      <span className="text-3xl">{icon}</span>
-
-      <h3
-        style={{ fontFamily: "var(--font-playfair)" }}
-        className="text-[#1a1610] text-xl sm:text-2xl font-semibold italic text-center leading-tight"
-      >
-        {title}
-      </h3>
-
-      <GoldDivider />
-
-      {(venueLabel || venueName) && (
-        <div className="flex flex-col items-center gap-1">
-          {venueLabel && (
-            <p
-              style={{ fontFamily: "var(--font-cormorant)" }}
-              className="text-[#9a8a6a] text-[10px] tracking-[0.35em] uppercase"
-            >
-              {venueLabel}
-            </p>
-          )}
-          {venueName && (
-            <p
-              style={{ fontFamily: "var(--font-playfair)" }}
-              className="text-[#1a1610] text-base sm:text-lg font-medium italic text-center leading-snug"
-            >
-              {venueName}
-            </p>
-          )}
-        </div>
-      )}
-
-      <p
-        style={{ fontFamily: "var(--font-cormorant)" }}
-        className="text-[#c9a84c] text-lg sm:text-xl font-medium tracking-widest uppercase"
-      >
-        {time}
-      </p>
-
-      <p
-        style={{ fontFamily: "var(--font-cormorant)" }}
-        className="text-[#1a1610] text-base sm:text-lg font-semibold text-center leading-snug"
-      >
-        {place}
-      </p>
-
-      <ul className="flex flex-col gap-1 text-center">
-        {refs.map((ref) => (
-          <li
-            key={ref}
-            style={{ fontFamily: "var(--font-cormorant)" }}
-            className="text-[#6b5a3a] text-sm sm:text-base italic leading-relaxed"
-          >
-            {ref}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
@@ -275,51 +157,7 @@ export default function Home() {
           <GoldDivider wide />
         </div>
 
-        {/* Cards grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
-          <CeremonyCard
-            icon="⛪"
-            title="Consécration du mariage"
-            venueName="Zoe Tabernacle Kinshasa"
-            time="12h30 — 13h00"
-            place="Avenue Bolobo 121, commune de Kinshasa"
-            refs={[
-              "Derrière le Stade des Martyrs",
-              "Station Cobil sur Kasa-Vubu",
-            ]}
-            delay="0ms"
-          />
-          <CeremonyCard
-            icon="🎊"
-            title="Cérémonie dansante"
-            venueLabel="Salle de fête"
-            venueName="La Servante du Seigneur"
-            time="19h00 — jusqu'à l'aube"
-            place="Révolution 1, commune de la Gombe"
-            refs={[
-              "Nouveau bâtiment de l'Église Philadelphie",
-              "En allant vers le rond-point SAFRICAS",
-              "Immeuble du coin de l'avenue Révolution",
-              "Juste après la salle Maranatha",
-            ]}
-            delay="120ms"
-          />
-        </div>
-
-        {/* NB note */}
-        <div
-          className="flex items-center gap-4 px-8 py-5 border border-[#c9a84c]/40 bg-[#c9a84c]/5 animate-fade-up w-full sm:w-auto"
-          style={{ animationDelay: "240ms" }}
-        >
-          <span className="text-[#c9a84c] text-xl select-none">✦</span>
-          <p
-            style={{ fontFamily: "var(--font-cormorant)" }}
-            className="text-[#4a3c26] text-base sm:text-lg italic font-medium tracking-wide"
-          >
-            N.B.&nbsp;: Cadeau en espèces
-          </p>
-          <span className="text-[#c9a84c] text-xl select-none">✦</span>
-        </div>
+        <WeddingProgram />
       </section>
 
       {/* ══════════════════════════════════════════════════════════════

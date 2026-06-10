@@ -1,6 +1,9 @@
 import { Playfair_Display, Cormorant_Garamond } from "next/font/google";
 import { supabase } from "@/lib/supabase";
 import InviteForm from "./InviteForm";
+import { GoldDivider } from "@/app/components/wedding/GoldDivider";
+import { TripleStar } from "@/app/components/wedding/TripleStar";
+import { WeddingProgram } from "@/app/components/wedding/WeddingProgram";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -17,34 +20,6 @@ const cormorant = Cormorant_Garamond({
   style: ["normal", "italic"],
   display: "swap",
 });
-
-// ─── Ornamental helpers ────────────────────────────────────────────────────
-
-function GoldDivider({ wide = false }: { wide?: boolean }) {
-  return (
-    <div className="flex items-center gap-4 w-full justify-center">
-      <div
-        className={`h-px bg-[#c9a84c]/50 ${wide ? "w-20 sm:w-32" : "w-10 sm:w-16"}`}
-      />
-      <span className="text-[#c9a84c] text-xs select-none">✦</span>
-      <div
-        className={`h-px bg-[#c9a84c]/50 ${wide ? "w-20 sm:w-32" : "w-10 sm:w-16"}`}
-      />
-    </div>
-  );
-}
-
-function TripleStar() {
-  return (
-    <div className="flex items-center gap-4 justify-center">
-      <div className="h-px w-12 sm:w-24 bg-[#c9a84c]/40" />
-      <span className="text-[#c9a84c] text-[10px] tracking-[0.6em] select-none">
-        ✦ ✦ ✦
-      </span>
-      <div className="h-px w-12 sm:w-24 bg-[#c9a84c]/40" />
-    </div>
-  );
-}
 
 // ─── Page ──────────────────────────────────────────────────────────────────
 
@@ -201,77 +176,7 @@ export default async function InvitePage({
                 Programme du jour
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                {/* Church */}
-                <div className="relative flex flex-col items-center gap-3 p-6 border border-[#c9a84c]/30 bg-white/60 text-center">
-                  <span className="absolute top-2 left-2 w-4 h-4 border-l border-t border-[#c9a84c]/50" />
-                  <span className="absolute top-2 right-2 w-4 h-4 border-r border-t border-[#c9a84c]/50" />
-                  <span className="absolute bottom-2 left-2 w-4 h-4 border-l border-b border-[#c9a84c]/50" />
-                  <span className="absolute bottom-2 right-2 w-4 h-4 border-r border-b border-[#c9a84c]/50" />
-                  <span className="text-2xl">⛪</span>
-                  <p
-                    style={{ fontFamily: "var(--font-playfair)" }}
-                    className="text-[#1a1610] text-base font-semibold italic"
-                  >
-                    Consécration
-                  </p>
-                  <p
-                    style={{ fontFamily: "var(--font-cormorant)" }}
-                    className="text-[#c9a84c] text-sm tracking-widest uppercase font-medium"
-                  >
-                    12h30 — 13h00
-                  </p>
-                  <p
-                    style={{ fontFamily: "var(--font-cormorant)" }}
-                    className="text-[#6b5a3a] text-sm leading-snug"
-                  >
-                    Zoe Tabernacle Kinshasa
-                    <br />
-                    Av. Bolobo 121, Kinshasa
-                  </p>
-                </div>
-
-                {/* Reception */}
-                <div className="relative flex flex-col items-center gap-3 p-6 border border-[#c9a84c]/30 bg-white/60 text-center">
-                  <span className="absolute top-2 left-2 w-4 h-4 border-l border-t border-[#c9a84c]/50" />
-                  <span className="absolute top-2 right-2 w-4 h-4 border-r border-t border-[#c9a84c]/50" />
-                  <span className="absolute bottom-2 left-2 w-4 h-4 border-l border-b border-[#c9a84c]/50" />
-                  <span className="absolute bottom-2 right-2 w-4 h-4 border-r border-b border-[#c9a84c]/50" />
-                  <span className="text-2xl">🎊</span>
-                  <p
-                    style={{ fontFamily: "var(--font-playfair)" }}
-                    className="text-[#1a1610] text-base font-semibold italic"
-                  >
-                    Cérémonie dansante
-                  </p>
-                  <p
-                    style={{ fontFamily: "var(--font-cormorant)" }}
-                    className="text-[#c9a84c] text-sm tracking-widest uppercase font-medium"
-                  >
-                    19h00 — jusqu&apos;à l&apos;aube
-                  </p>
-                  <p
-                    style={{ fontFamily: "var(--font-cormorant)" }}
-                    className="text-[#6b5a3a] text-sm leading-snug"
-                  >
-                    La Servante du Seigneur
-                    <br />
-                    Révolution 1, Gombe
-                  </p>
-                </div>
-              </div>
-
-              {/* N.B. */}
-              <div className="flex items-center gap-3 px-6 py-4 border border-[#c9a84c]/40 bg-[#c9a84c]/5 justify-center">
-                <span className="text-[#c9a84c] text-lg select-none">✦</span>
-                <p
-                  style={{ fontFamily: "var(--font-cormorant)" }}
-                  className="text-[#4a3c26] text-base italic font-medium"
-                >
-                  N.B.&nbsp;: Cadeau en espèces
-                </p>
-                <span className="text-[#c9a84c] text-lg select-none">✦</span>
-              </div>
+              <WeddingProgram compact />
             </div>
 
             {/* RSVP Form card */}
